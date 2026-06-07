@@ -4,7 +4,7 @@ public class Arquimeds : MonoBehaviour
 {
     [Header("Object's properties")]
 
-    public float mass = 70f; // kg
+    public float mass = 80f; // kg
     public Vector3 objectDimensions = Vector3.one;
     private Vector3 position;
     private Vector3 velocity;
@@ -12,10 +12,10 @@ public class Arquimeds : MonoBehaviour
     
 
     [Header("fluid's properties")]
-    public float densityFluid = 1000; //kg/m^3
+    public float densityFluid = 1000f; //kg/m^3
     public float waterLevel = 0f;
     private float volumeDisplaced;
-    public float dragCoefficient = 0.5f;
+    public float dragCoefficient = 10.0f;
 
     [Header("physics' properties")]
     public float gravity = 9.81f; // m/s^2
@@ -30,33 +30,35 @@ public class Arquimeds : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        position = initialPosition;
-        velocity = initialVelocity;
+        position = transform.position;
+        initialPosition = position;
 
-        transform.position = position;
-        
+        velocity = initialVelocity;
+        acceleration = Vector3.zero;
+
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (time < totalTime) {
+        time += Time.deltaTime;
 
+        while (time >= stepTime)
+        {
             calculateSubmergedVolume();
             calculateAcceleration();
             calculatePositionandVelocity();
-
-            transform.position = position;
-
-            time += stepTime;
+            time -= stepTime;
         }
-        
+
+        transform.position = position;
+
     }
 
     void calculatePositionandVelocity() { 
         
-        velocity += acceleration*stepTime;
         position += velocity*stepTime + 0.5f*acceleration*stepTime*stepTime;
+        velocity += acceleration * stepTime;
     }
 
     void calculateAcceleration()
@@ -66,16 +68,16 @@ public class Arquimeds : MonoBehaviour
         Vector3 bouyantForce = new Vector3(0, densityFluid * volumeDisplaced * gravity, 0);
 
         Vector3 dragForce = Vector3.zero;
-        Vector3 HorizontalForce = Vector3.zero;
+        
 
         if (volumeDisplaced > 0f) { 
         
             dragForce = - dragCoefficient* volumeDisplaced*velocity;
-            HorizontalForce = new Vector3(1f, 0, 1f);
+            
         } 
 
 
-        Vector3 totalFoce = gravForce + bouyantForce + dragForce + HorizontalForce;
+        Vector3 totalFoce = gravForce + bouyantForce + dragForce;
 
         acceleration= (totalFoce)/mass;
 
@@ -104,7 +106,11 @@ public class Arquimeds : MonoBehaviour
         }
    
     }
-     void OnDrawGizmos()
+    public void SetWaterLevel(float newWaterLevel)
+    {
+        waterLevel = newWaterLevel;
+    }
+    void OnDrawGizmos()
     {
         DrawCube(transform.position, objectDimensions);   
     }

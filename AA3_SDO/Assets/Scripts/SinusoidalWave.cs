@@ -36,6 +36,12 @@ public class SinusoidalWave : MonoBehaviour
         }
     }
 
+    void OnDestroy()
+    {
+        if (waveToggle != null)
+            waveToggle.onValueChanged.RemoveListener(OnToggleChanged);
+    }
+
     void OnToggleChanged(bool value)
     {
         waveActive = value;
@@ -68,8 +74,11 @@ public class SinusoidalWave : MonoBehaviour
             for (int x = 0; x < width; x++)
             {
                 int i = z * width + x;
-                float px = x * spacing;
-                float pz = z * spacing;
+
+                float halfWidth = (width - 1) * spacing * 0.5f;
+                float halfHeight = (height - 1) * spacing * 0.5f;
+                float px = x * spacing - halfWidth;
+                float pz = z * spacing - halfHeight;
                 vertices[i] = new Vector3(px, 0f, pz);
                 baseVertices[i] = new Vector3(px, 0f, pz); 
             }
@@ -137,9 +146,16 @@ public class SinusoidalWave : MonoBehaviour
         mesh.RecalculateNormals();
     }
 
-    void OnDestroy()
+    public float GetWaveHeight(float worldX, float worldZ)
     {
-        if (waveToggle != null)
-            waveToggle.onValueChanged.RemoveListener(OnToggleChanged);
+        if (!waveActive) return 0f;
+
+        float t = Time.time;
+        float speed = frequency * wavelength;
+        Vector2 dir = direction.normalized;
+        float proj = dir.x * worldX + dir.y * worldZ;
+
+        return amplitude * Mathf.Sin(
+            (2f * Mathf.PI / wavelength) * (proj - speed * t) + phase);
     }
 }
