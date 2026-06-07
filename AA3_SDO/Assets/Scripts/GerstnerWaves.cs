@@ -184,15 +184,18 @@ public class GerstnerWaves : MonoBehaviour
     {
         if (!IsWaveActive())
         {
-            return 0f;
+            return transform.position.y;
         }
 
         float t = Time.time;
         float height = 0f;
 
+        float localX = worldX - transform.position.x;
+        float localZ = worldZ - transform.position.z;
+
         foreach (var wave in waves)
         {
-            Vector3 d = CalculateGerstner(wave, worldX, worldZ, t);
+            Vector3 d = CalculateGerstner(wave, localX, localZ, t);
             height += d.y;
         }
 
