@@ -185,6 +185,7 @@ public class GerstnerWaves : MonoBehaviour
         if (!IsWaveActive())
         {
             return transform.position.y;
+
         }
 
         float t = Time.time;

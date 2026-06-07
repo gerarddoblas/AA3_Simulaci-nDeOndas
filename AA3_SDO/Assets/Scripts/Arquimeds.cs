@@ -27,6 +27,7 @@ public class Arquimeds : MonoBehaviour
     public float totalTime = 1000f;
     private float time = 0f;
 
+    public bool simulationEnabled = true;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -41,6 +42,8 @@ public class Arquimeds : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (!simulationEnabled) return;
+
         time += Time.deltaTime;
 
         while (time >= stepTime)
@@ -50,15 +53,16 @@ public class Arquimeds : MonoBehaviour
             calculatePositionandVelocity();
             time -= stepTime;
         }
-
         transform.position = new Vector3(initialPosition.x, position.y, initialPosition.z);
 
     }
 
-    void calculatePositionandVelocity() { 
-        
-        position += velocity*stepTime + 0.5f*acceleration*stepTime*stepTime;
+    void calculatePositionandVelocity() {
+
         velocity += acceleration * stepTime;
+        //position += velocity*stepTime + 0.5f*acceleration*stepTime*stepTime;
+        position += velocity * stepTime;// + 0.5f*acceleration*stepTime*stepTime;
+
     }
 
     void calculateAcceleration()
@@ -67,19 +71,14 @@ public class Arquimeds : MonoBehaviour
         Vector3 gravForce = new Vector3(0, -mass * gravity, 0);
         Vector3 bouyantForce = new Vector3(0, densityFluid * volumeDisplaced * gravity, 0);
 
-        Vector3 dragForce = Vector3.zero;
-        
+        Vector3 netForce = gravForce + bouyantForce;
 
-        if (volumeDisplaced > 0f) { 
-        
-            dragForce = - dragCoefficient* volumeDisplaced*velocity;
-            
-        } 
+        //Debug.Log($"Grav: {gravForce.y:F2} | Empuje: {bouyantForce.y:F2} | Drag: {dragForce.y:F2} | Vol: {volumeDisplaced:F4}");
 
+        acceleration = netForce / mass;
 
-        Vector3 totalFoce = gravForce + bouyantForce + dragForce;
-
-        acceleration= (totalFoce)/mass;
+        // Aplica el drag directamente sobre la velocidad, no como fuerza
+        velocity *= Mathf.Clamp01(1f - dragCoefficient * stepTime);
 
     }
 

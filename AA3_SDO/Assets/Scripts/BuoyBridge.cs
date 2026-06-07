@@ -31,7 +31,14 @@ public class BuoyBridge : MonoBehaviour
     {
         if (arquimeds == null) return;
 
-        float waveHeight = flatWaterLevel;
+        if (gerstnerWave != null && gerstnerWave.IsWaveActive())
+            waterMode = WaterMode.Gerstner;
+        else if (sinusoidalWave != null && sinusoidalWave.IsWaveActive())
+            waterMode = WaterMode.Sinusoidal;
+        else
+            waterMode = WaterMode.Flat;
+
+            float waveHeight = flatWaterLevel;
 
         Arquimeds arq = arquimeds;
         float queryX = arq != null ? arq.initialPosition.x : transform.position.x;
@@ -47,11 +54,17 @@ public class BuoyBridge : MonoBehaviour
         else if (waterMode == WaterMode.Gerstner && gerstnerWave != null)
         {
             if (gerstnerWave.IsWaveActive())
+            {
+                arquimeds.simulationEnabled = true;
                 waveHeight = gerstnerWave.GetWaveHeight(transform.position.x, transform.position.z);
+            }
             else
+            {
+                arquimeds.simulationEnabled = false;
                 waveHeight = flatWaterLevel;
-        }
+            }
 
+        }
         arquimeds.SetWaterLevel(waveHeight);
     }
 }
