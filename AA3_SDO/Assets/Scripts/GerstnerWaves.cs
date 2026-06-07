@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GerstnerWaves : MonoBehaviour
 {
@@ -6,7 +7,6 @@ public class GerstnerWaves : MonoBehaviour
     [Header("Variables")]
     public int resolution = 100;
     public float size = 100;
-    public bool _waveEnabled = true;
 
     [System.Serializable]
     public struct WavesData
@@ -28,24 +28,40 @@ public class GerstnerWaves : MonoBehaviour
     private Vector3[] _currentVertex;
     private int[] _triangles;
 
+    [Header("UI")]
+    public Toggle waveToggle;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         GenerateMesh();
+
+        if (waveToggle != null)
+        {
+            waveToggle.onValueChanged.AddListener(OnToggleChanged);
+        }
     }
 
+   
     // Update is called once per frame
     void Update()
     {
 
-        if(mesh == null || _baseVertex == null) return;
+        if (mesh == null || _baseVertex == null) return;
 
-        if(!_waveEnabled)
+        bool active = true;
+
+        if (waveToggle != null)
         {
-            mesh.vertices = _baseVertex;
-            mesh.RecalculateNormals();
+            active = waveToggle.isOn;
+        }
+
+        if (!active)
+        {
+            FlattenMesh();
             return;
         }
+
         float t = Time.time;
 
         for (int i = 0; i < _baseVertex.Length; i++)
@@ -64,6 +80,34 @@ public class GerstnerWaves : MonoBehaviour
         mesh.vertices = _currentVertex;
         mesh.RecalculateNormals();
     }
+
+    void OnToggleChanged(bool value)
+    {
+        Debug.Log("Gerstner toggle value: " + value);
+        if (!value)
+        {
+            FlattenMesh();
+        }
+    }
+
+    public bool IsWaveActive()
+    {
+        if (waveToggle != null)
+        {
+            return waveToggle.isOn;
+        }
+
+        return true;
+    }
+
+    void FlattenMesh()
+    {
+        if (mesh == null || _baseVertex == null) return;
+
+        mesh.vertices = _baseVertex;
+        mesh.RecalculateNormals();
+    }
+
     void GenerateMesh()
     {
         mesh = new Mesh();
@@ -138,16 +182,33 @@ public class GerstnerWaves : MonoBehaviour
     }
     public float GetWaveHeight(float worldX, float worldZ)
     {
+        if (!IsWaveActive())
+        {
+            return transform.position.y;
+
+        }
+
         float t = Time.time;
         float height = 0f;
 
+        float localX = worldX - transform.position.x;
+        float localZ = worldZ - transform.position.z;
+
         foreach (var wave in waves)
         {
-            Vector3 d = CalculateGerstner(wave, worldX, worldZ, t);
+            Vector3 d = CalculateGerstner(wave, localX, localZ, t);
             height += d.y;
         }
 
-        return height;
+        return transform.position.y + height;
+    }
+
+    void OnDestroy()
+    {
+        if (waveToggle != null)
+        {
+            waveToggle.onValueChanged.RemoveListener(OnToggleChanged);
+        }
     }
 
 }

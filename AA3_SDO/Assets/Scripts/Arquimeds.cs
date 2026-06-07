@@ -4,7 +4,7 @@ public class Arquimeds : MonoBehaviour
 {
     [Header("Object's properties")]
 
-    public float mass = 70f; // kg
+    public float mass = 800f; // kg
     public Vector3 objectDimensions = Vector3.one;
     private Vector3 position;
     private Vector3 velocity;
@@ -12,10 +12,10 @@ public class Arquimeds : MonoBehaviour
     
 
     [Header("fluid's properties")]
-    public float densityFluid = 1000; //kg/m^3
+    public float densityFluid = 1000f; //kg/m^3
     public float waterLevel = 0f;
     private float volumeDisplaced;
-    public float dragCoefficient = 0.5f;
+    public float dragCoefficient = 10.0f;
 
     [Header("physics' properties")]
     public float gravity = 9.81f; // m/s^2
@@ -27,36 +27,42 @@ public class Arquimeds : MonoBehaviour
     public float totalTime = 1000f;
     private float time = 0f;
 
+    public bool simulationEnabled = true;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        position = initialPosition;
-        velocity = initialVelocity;
+        position = transform.position;
+        initialPosition = position;
 
-        transform.position = position;
-        
+        velocity = initialVelocity;
+        acceleration = Vector3.zero;
+
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (time < totalTime) {
+        if (!simulationEnabled) return;
 
+        time += Time.deltaTime;
+
+        while (time >= stepTime)
+        {
             calculateSubmergedVolume();
             calculateAcceleration();
             calculatePositionandVelocity();
-
-            transform.position = position;
-
-            time += stepTime;
+            time -= stepTime;
         }
-        
+        transform.position = new Vector3(initialPosition.x, position.y, initialPosition.z);
+
     }
 
-    void calculatePositionandVelocity() { 
-        
-        velocity += acceleration*stepTime;
-        position += velocity*stepTime + 0.5f*acceleration*stepTime*stepTime;
+    void calculatePositionandVelocity() {
+
+        velocity += acceleration * stepTime;
+        //position += velocity*stepTime + 0.5f*acceleration*stepTime*stepTime;
+        position += velocity * stepTime;// + 0.5f*acceleration*stepTime*stepTime;
+
     }
 
     void calculateAcceleration()
@@ -65,19 +71,14 @@ public class Arquimeds : MonoBehaviour
         Vector3 gravForce = new Vector3(0, -mass * gravity, 0);
         Vector3 bouyantForce = new Vector3(0, densityFluid * volumeDisplaced * gravity, 0);
 
-        Vector3 dragForce = Vector3.zero;
-        Vector3 HorizontalForce = Vector3.zero;
+        Vector3 netForce = gravForce + bouyantForce;
 
-        if (volumeDisplaced > 0f) { 
-        
-            dragForce = - dragCoefficient* volumeDisplaced*velocity;
-            HorizontalForce = new Vector3(1f, 0, 1f);
-        } 
+        //Debug.Log($"Grav: {gravForce.y:F2} | Empuje: {bouyantForce.y:F2} | Drag: {dragForce.y:F2} | Vol: {volumeDisplaced:F4}");
 
+        acceleration = netForce / mass;
 
-        Vector3 totalFoce = gravForce + bouyantForce + dragForce + HorizontalForce;
-
-        acceleration= (totalFoce)/mass;
+        // Aplica el drag directamente sobre la velocidad, no como fuerza
+        velocity *= Mathf.Clamp01(1f - dragCoefficient * stepTime);
 
     }
 
@@ -104,7 +105,11 @@ public class Arquimeds : MonoBehaviour
         }
    
     }
-     void OnDrawGizmos()
+    public void SetWaterLevel(float newWaterLevel)
+    {
+        waterLevel = newWaterLevel;
+    }
+    void OnDrawGizmos()
     {
         DrawCube(transform.position, objectDimensions);   
     }
