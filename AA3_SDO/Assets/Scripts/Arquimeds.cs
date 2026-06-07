@@ -4,7 +4,7 @@ public class Arquimeds : MonoBehaviour
 {
     [Header("Object's properties")]
 
-    public float mass = 80f; // kg
+    public float mass = 800f; // kg
     public Vector3 objectDimensions = Vector3.one;
     private Vector3 position;
     private Vector3 velocity;
@@ -51,7 +51,7 @@ public class Arquimeds : MonoBehaviour
             time -= stepTime;
         }
 
-        transform.position = position;
+        transform.position = new Vector3(initialPosition.x, position.y, initialPosition.z);
 
     }
 
